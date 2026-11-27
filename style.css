@@ -72,6 +72,11 @@
 
 /* ---------- Base ---------- */
 
+/* Make the hidden attribute win over display: flex etc. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   background: var(--bg);
 }
@@ -180,7 +185,9 @@ select:focus-visible {
   color: var(--muted);
 }
 
-.add-habit input {
+/* Text inputs: shared by the add form and the edit form */
+.add-habit input,
+.habit__edit input {
   width: 100%;
   padding: 0.75rem 0.875rem;
   font: inherit;
@@ -195,11 +202,13 @@ select:focus-visible {
   opacity: 0.8;
 }
 
-.add-habit input[aria-invalid="true"] {
+.add-habit input[aria-invalid="true"],
+.habit__edit input[aria-invalid="true"] {
   border-color: var(--danger);
 }
 
-.add-habit button {
+/* Main button ("Add habit", "Save", "Add a new habit") */
+.button-primary {
   align-self: flex-start;
   padding: 0.8rem 1.75rem;
   font-size: 0.8125rem;
@@ -208,13 +217,36 @@ select:focus-visible {
   letter-spacing: 0.16em;
   color: var(--accent-text);
   background: var(--accent);
-  border: none;
+  border: 1px solid var(--accent);
   border-radius: var(--radius);
   transition: background 0.2s;
 }
 
-.add-habit button:hover {
+.button-primary:hover {
   background: var(--accent-hover);
+}
+
+/* Quieter outlined button ("Cancel") */
+.button-secondary {
+  padding: 0.8rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+}
+
+.button-secondary:hover {
+  border-color: var(--text);
+}
+
+.add-habit__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .form-error {
@@ -336,21 +368,52 @@ select:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.habit__remove {
+/* Small text buttons next to each habit: Edit, Remove */
+.habit__actions {
+  display: flex;
   flex-shrink: 0;
+  gap: 0.25rem;
+}
+
+.habit__action {
   padding: 0.25rem 0.625rem;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--danger);
   background: none;
   border: 1px solid transparent;
   border-radius: var(--radius);
 }
 
-.habit__remove:hover {
+.habit__action--edit {
+  color: var(--muted);
+}
+
+.habit__action--edit:hover {
+  color: var(--text);
+  border-color: var(--input-border);
+}
+
+.habit__action--remove {
+  color: var(--danger);
+}
+
+.habit__action--remove:hover {
   border-color: var(--danger);
+}
+
+/* Inline edit form (replaces the name + description while editing) */
+.habit__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habit__edit-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .habit__today {

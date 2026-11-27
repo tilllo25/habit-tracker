@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Habit Tracker</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <main>
@@ -19,6 +19,11 @@
         </select>
       </div>
     </header>
+
+    <!-- Shown instead of the form once at least one habit exists -->
+    <button type="button" id="open-add-form" class="button-primary open-add-form" aria-controls="add-habit-form" aria-expanded="false" hidden>
+      + Add a new habit
+    </button>
 
     <form id="add-habit-form" class="add-habit" novalidate>
       <div class="field">
@@ -44,7 +49,11 @@
           autocomplete="off"
         >
       </div>
-      <button type="submit">Add habit</button>
+      <div class="add-habit__buttons">
+        <button type="submit" class="button-primary">Add habit</button>
+        <!-- Only shown when there are habits, so there is something to go back to -->
+        <button type="button" id="cancel-add" class="button-secondary" hidden>Cancel</button>
+      </div>
       <p id="form-error" class="form-error" role="alert"></p>
     </form>
 
@@ -69,6 +78,6 @@
       <ul id="habit-list" class="habit-list"></ul>
     </section>
   </main>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
