@@ -10,6 +10,9 @@ const state = {
   habits: loadHabits(),
   // The habit being edited, with the user's unsaved changes: { id, name, description, error }
   edit: null,
+  // Whether the "new habit" form was opened via the "Add a new habit" button.
+  // With no habits yet, the form is always shown.
+  addFormOpen: false,
 };
 
 // ---------- Theme (light / dark / party) ----------
@@ -310,10 +313,25 @@ function renderTodaySummary(todayKey) {
   document.getElementById('today-progress-fill').style.width = `${(done / total) * 100}%`;
 }
 
+// With no habits the form is always visible. Otherwise it's hidden behind the
+// "Add a new habit" button until that button is clicked.
+function renderAddForm() {
+  const hasHabits = state.habits.length > 0;
+  const formVisible = !hasHabits || state.addFormOpen;
+  const openButton = document.getElementById('open-add-form');
+
+  document.getElementById('add-habit-form').hidden = !formVisible;
+  openButton.hidden = formVisible;
+  openButton.setAttribute('aria-expanded', String(formVisible));
+  document.getElementById('cancel-add').hidden = !hasHabits;
+}
+
 function render() {
   const list = document.getElementById('habit-list');
   const emptyState = document.getElementById('empty-state');
   const todayKey = toDateKey(new Date());
+
+  renderAddForm();
 
   list.replaceChildren(...state.habits.map((habit) => renderHabit(habit, todayKey)));
   emptyState.hidden = state.habits.length > 0;
@@ -357,14 +375,39 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Close the form again; it's replaced by the "Add a new habit" button.
+    state.addFormOpen = false;
     addHabit(name, descriptionInput.value.trim());
     showError('');
     form.reset();
-    nameInput.focus();
+    openButton.focus();
   });
 
   // Clear the error as soon as the user starts fixing it.
   nameInput.addEventListener('input', () => showError(''));
+
+  const openButton = document.getElementById('open-add-form');
+  const cancelButton = document.getElementById('cancel-add');
+
+  openButton.addEventListener('click', () => {
+    state.addFormOpen = true;
+    render();
+    nameInput.focus();
+  });
+
+  function closeAddForm() {
+    if (state.habits.length === 0) return; // nothing to go back to
+    state.addFormOpen = false;
+    form.reset();
+    showError('');
+    render();
+    openButton.focus();
+  }
+
+  cancelButton.addEventListener('click', closeAddForm);
+  form.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeAddForm();
+  });
 
   // One listener for all habits (event delegation), since the list is re-rendered.
   list.addEventListener('change', (event) => {

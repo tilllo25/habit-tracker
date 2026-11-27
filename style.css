@@ -72,6 +72,11 @@
 
 /* ---------- Base ---------- */
 
+/* Make the hidden attribute win over display: flex etc. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   background: var(--bg);
 }
@@ -202,8 +207,7 @@ select:focus-visible {
   border-color: var(--danger);
 }
 
-/* Main button ("Add habit", "Save") */
-.add-habit button,
+/* Main button ("Add habit", "Save", "Add a new habit") */
 .button-primary {
   align-self: flex-start;
   padding: 0.8rem 1.75rem;
@@ -218,7 +222,6 @@ select:focus-visible {
   transition: background 0.2s;
 }
 
-.add-habit button:hover,
 .button-primary:hover {
   background: var(--accent-hover);
 }
@@ -238,6 +241,12 @@ select:focus-visible {
 
 .button-secondary:hover {
   border-color: var(--text);
+}
+
+.add-habit__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .form-error {
