@@ -224,6 +224,73 @@ select:focus-visible {
   color: var(--danger);
 }
 
+/* ---------- Today counter ---------- */
+
+.today-summary {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.today-summary[hidden] {
+  display: none;
+}
+
+.today-summary__text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.625rem;
+  margin: 0 0 0.75rem;
+}
+
+.today-summary__count {
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-summary__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.today-summary__bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--done-soft);
+  border-radius: 999px;
+}
+
+.today-summary__fill {
+  width: 0;
+  height: 100%;
+  background: var(--done);
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+
+.today-summary--complete .today-summary__count,
+.today-summary--complete .today-summary__label {
+  color: var(--done);
+}
+
+.today-summary--complete .today-summary__fill {
+  background: var(--today);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-summary__fill {
+    transition: none;
+  }
+}
+
 /* ---------- Habit list ---------- */
 
 .empty-state {
@@ -409,6 +476,15 @@ select:focus-visible {
 
 :root[data-theme="party"] .habit {
   box-shadow: 0 0 12px rgba(255, 0, 230, 0.6);
+}
+
+:root[data-theme="party"] .today-summary {
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+:root[data-theme="party"] .today-summary__fill {
+  background: linear-gradient(90deg, #ff0080, #ffef00, #00ff6a, #00e5ff, #ff00d4);
+  box-shadow: 0 0 10px #ff00e6;
 }
 
 :root[data-theme="party"] .week__day--done {

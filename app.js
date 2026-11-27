@@ -190,6 +190,28 @@ function renderHabit(habit, todayKey) {
   return item;
 }
 
+// "2 / 5 habits done today", plus a progress bar. Hidden when there are no habits.
+function renderTodaySummary(todayKey) {
+  const summary = document.getElementById('today-summary');
+  const total = state.habits.length;
+  const done = state.habits.filter((habit) => habit.completions.includes(todayKey)).length;
+
+  summary.hidden = total === 0;
+  if (total === 0) return;
+
+  const allDone = done === total;
+  summary.classList.toggle('today-summary--complete', allDone);
+  document.getElementById('today-count').textContent = `${done} / ${total}`;
+  document.getElementById('today-label').textContent = allDone
+    ? 'All habits done today 🎉'
+    : `habit${total === 1 ? '' : 's'} done today`;
+
+  const bar = document.getElementById('today-progress');
+  bar.setAttribute('aria-valuemax', String(total));
+  bar.setAttribute('aria-valuenow', String(done));
+  document.getElementById('today-progress-fill').style.width = `${(done / total) * 100}%`;
+}
+
 function render() {
   const list = document.getElementById('habit-list');
   const emptyState = document.getElementById('empty-state');
@@ -197,6 +219,7 @@ function render() {
 
   list.replaceChildren(...state.habits.map((habit) => renderHabit(habit, todayKey)));
   emptyState.hidden = state.habits.length > 0;
+  renderTodaySummary(todayKey);
 }
 
 // ---------- Events ----------
