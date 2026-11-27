@@ -14,5 +14,7 @@ Open `index.html` in a browser. There's no install or build step.
 
 ## Rules
 
-- Keep everything in the three files: `index.html`, `style.css`, `app.js`.
+- Keep all code in the three files: `index.html`, `style.css`, `app.js`.
+- Images go in `images/` as web-sized copies (around 1920px, a few hundred KB). Full-size originals stay in `Pictures/`, which git ignores.
+- After changing `style.css` or `app.js`, bump the `?v=` number in `index.html` so browsers load the new files.
 - Ask before adding any new library.

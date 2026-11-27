@@ -12,13 +12,13 @@
   color-scheme: light;
   --font: "Futura", "Avenir Next", "Century Gothic", "Trebuchet MS", sans-serif;
   --radius: 4px;
-  --bg: #f6f3ee;
-  --surface: #fff;
+  --bg: #fff;
+  --surface: rgba(255, 255, 255, 0.55);
   --text: #1f2a2b;
-  --muted: #6b7471;
-  --border: #e6e0d6;
-  --input-bg: #fff;
-  --input-border: #cfc6b6;
+  --muted: #5f6b69;
+  --border: #e5e9e8;
+  --input-bg: rgba(255, 255, 255, 0.75);
+  --input-border: #cdd4d2;
   --accent: #1f2a2b;
   --accent-hover: #34494a;
   --accent-text: #fff;
@@ -27,17 +27,23 @@
   --today: #b08a5a;
   --danger: #a8443a;
   --focus: #b08a5a;
+  /* Frosted panels over the photo slider */
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow: 0 20px 50px -20px rgba(31, 42, 43, 0.35);
+  /* Veil over the photos so text stays readable */
+  --veil: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.25));
 }
 
 /* Dark: a deep, moody pond with sage leaves, lotus blush and gold */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #141b1c;
-  --surface: #1c2526;
+  --surface: rgba(28, 37, 38, 0.55);
   --text: #f2efe9;
   --muted: #a3aca8;
   --border: #2c3839;
-  --input-bg: #172021;
+  --input-bg: rgba(23, 32, 33, 0.7);
   --input-border: #3d4b4c;
   --accent: #e8c9c3;
   --accent-hover: #f3dcd7;
@@ -47,6 +53,10 @@
   --today: #c9a46c;
   --danger: #f0a39b;
   --focus: #c9a46c;
+  --glass: rgba(20, 27, 28, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.7);
+  --veil: linear-gradient(180deg, rgba(12, 17, 18, 0.35), rgba(12, 17, 18, 0.65));
 }
 
 /* Party: shrill neon colors on a trippy rainbow background */
@@ -68,6 +78,9 @@
   --danger: #ff5c5c;
   --focus: #ffe600;
   --radius: 10px;
+  --glass: rgba(15, 0, 35, 0.72);
+  --glass-border: #ff00e6;
+  --shadow: 0 0 24px #ff00e6, 0 0 48px #00f0ff;
 }
 
 /* ---------- Base ---------- */
@@ -82,35 +95,551 @@ html {
 }
 
 body {
+  position: relative;
+  isolation: isolate; /* keeps the background layers behind the content */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin: 0;
   font-family: var(--font);
   line-height: 1.6;
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
 }
 
-main {
-  max-width: 640px;
+a {
+  color: inherit;
+}
+
+.container {
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 3rem 1rem;
+  padding: 0 1rem;
 }
 
 /* Wide, uppercase, spaced-out headings */
 h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
   font-weight: 500;
+  line-height: 1.2;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
 }
 
 h2 {
-  margin: 2.75rem 0 1rem;
+  margin: 2.5rem 0 1rem;
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--muted);
+}
+
+/* ---------- Background photo slider ----------
+   Five photos crossfade in a 40s loop (8s each), with a slow zoom. Pure CSS. */
+
+.bg-slider {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.bg-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: slide 40s infinite;
+}
+
+.bg-slide--1 { background-image: url("images/slide-1-morning-walk.jpg"); }
+.bg-slide--2 { background-image: url("images/slide-2-hiking.jpg"); animation-delay: 8s; }
+.bg-slide--3 { background-image: url("images/slide-3-greens.jpg"); animation-delay: 16s; }
+.bg-slide--4 { background-image: url("images/slide-4-yoga.jpg"); background-position: center 30%; animation-delay: 24s; }
+.bg-slide--5 { background-image: url("images/slide-5-flatlay.jpg"); animation-delay: 32s; }
+
+/* Veil over the photos for readability */
+.bg-slider::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--veil);
+}
+
+@keyframes slide {
+  0%   { opacity: 0; transform: scale(1.08); }
+  4%   { opacity: 1; }
+  20%  { opacity: 1; }
+  25%  { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ---------- Frosted glass panels ---------- */
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: calc(var(--radius) * 3);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+}
+
+/* ---------- Header ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+}
+
+.brand__mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: var(--done);
+}
+
+.brand__name {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* ---------- Page layout: intro left, app right ---------- */
+
+.layout {
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: start;
+  gap: 2rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  /* Opening: the column makes room first, then the intro fades in (see below) */
+  transition:
+    grid-template-columns 0.6s var(--ease),
+    gap 0.6s var(--ease);
+}
+
+.intro,
+.app {
+  padding: 2.25rem;
+}
+
+/* The app never gets wider than this, so it stays centered and readable when the intro is hidden */
+.app {
+  width: 100%;
+  max-width: 760px;
+  justify-self: center;
+}
+
+/* The intro stays in view while scrolling through a long habit list */
+.intro {
+  position: sticky;
+  top: 6rem;
+  overflow: hidden;
+  transform-origin: left center;
+  transition:
+    opacity 0.45s ease 0.25s,
+    transform 0.6s var(--ease) 0.2s,
+    filter 0.45s ease 0.25s,
+    visibility 0s;
+}
+
+/* Contents drift in one after another when the intro opens */
+.intro > * {
+  transition:
+    opacity 0.4s ease calc(0.45s + var(--stagger, 0) * 70ms),
+    transform 0.5s var(--ease) calc(0.45s + var(--stagger, 0) * 70ms);
+}
+
+.intro > :nth-child(2) { --stagger: 1; }
+.intro > :nth-child(3) { --stagger: 2; }
+.intro > :nth-child(4) { --stagger: 3; }
+.intro > :nth-child(5) { --stagger: 4; }
+.intro > :nth-child(6) { --stagger: 5; }
+.intro > :nth-child(7) { --stagger: 6; }
+
+/* Closing: blur, shrink and slide away to the left, then the column closes */
+.intro-collapsed .intro {
+  opacity: 0;
+  transform: translateX(-48px) scale(0.92);
+  filter: blur(14px);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.5s var(--ease),
+    filter 0.35s ease,
+    visibility 0s 0.6s;
+}
+
+.intro-collapsed .intro > * {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+@media (min-width: 901px) {
+  .intro-collapsed .layout {
+    grid-template-columns: minmax(0, 0fr) minmax(0, 1fr);
+    column-gap: 0;
+    transition:
+      grid-template-columns 0.6s var(--ease) 0.15s,
+      gap 0.6s var(--ease) 0.15s;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 1.5rem;
+  }
+
+  .intro {
+    position: relative;
+    top: auto; /* the desktop sticky offset would push it down here */
+    max-height: 1400px;
+    transition:
+      opacity 0.45s ease 0.25s,
+      transform 0.6s var(--ease) 0.2s,
+      filter 0.45s ease 0.25s,
+      max-height 0.6s var(--ease),
+      padding 0.6s var(--ease),
+      visibility 0s;
+  }
+
+  /* On phones the panel folds up instead of sliding sideways */
+  .intro-collapsed .layout {
+    row-gap: 0;
+  }
+
+  .intro-collapsed .intro {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    transform: translateY(-24px) scale(0.96);
+    transition:
+      opacity 0.3s ease,
+      transform 0.5s var(--ease),
+      filter 0.3s ease,
+      max-height 0.6s var(--ease) 0.1s,
+      padding 0.6s var(--ease) 0.1s,
+      border-width 0s 0.6s,
+      visibility 0s 0.7s;
+  }
+}
+
+/* Leave room for the × */
+.intro .eyebrow {
+  padding-right: 2.5rem;
+}
+
+/* × in the corner of the intro */
+.intro__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  transition: color 0.2s, border-color 0.2s, transform 0.3s var(--ease, ease);
+}
+
+.intro__close:hover {
+  color: var(--text);
+  border-color: var(--input-border);
+  transform: rotate(90deg);
+}
+
+.intro__close svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ---------- Header buttons ---------- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.header-button:hover {
+  border-color: var(--text);
+}
+
+.header-button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Filled while the intro is open */
+.header-button[aria-expanded="true"] {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* After hiding the intro, the button glows twice to show where it went */
+.header-button--pulse {
+  animation: header-pulse 1.2s ease-out 2;
+}
+
+@keyframes header-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--today); }
+  100% { box-shadow: 0 0 0 12px transparent; }
+}
+
+/* No intro animation while the page is loading (a saved "hidden" state just applies) */
+.is-loading .layout,
+.is-loading .intro,
+.is-loading .intro > * {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layout,
+  .intro,
+  .intro > *,
+  .intro-collapsed .layout,
+  .intro-collapsed .intro,
+  .intro-collapsed .intro > * {
+    transition: none !important;
+  }
+
+  .header-button--pulse {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .intro,
+  .app {
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* Keep the header on one line: brand + dropdown, no visible "Mode" label */
+  .site-header__inner {
+    flex-wrap: nowrap;
+  }
+
+  .brand__name {
+    font-size: 0.875rem;
+    letter-spacing: 0.14em;
+  }
+
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  /* Icon only on phones; the label stays available to screen readers */
+  .header-button {
+    padding: 0.375rem;
+  }
+
+  .header-button__label,
+  .theme-picker label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Intro: who it's for + how it works ---------- */
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--today);
+}
+
+.lead {
+  margin: 1.25rem 0 0;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.intro__subheading {
+  margin-top: 2rem;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.step {
+  display: flex;
+  gap: 1rem;
+}
+
+.step__number {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 600;
+  color: var(--done);
+  background: var(--done-soft);
+  border-radius: 50%;
+}
+
+.step__title {
+  margin: 0.125rem 0 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.step__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 2rem 0 0;
+  padding-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+.privacy-note svg {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.125rem;
+  fill: var(--done);
+}
+
+/* ---------- App panel ---------- */
+
+.app__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.app__heading h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+
+.app__date {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  background: var(--glass);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a:hover {
+  color: var(--text);
 }
 
 button,
@@ -126,18 +655,7 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* ---------- Top bar + mode picker ---------- */
-
-.top-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
-  padding-bottom: 1.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--border);
-}
+/* ---------- Mode picker ---------- */
 
 .theme-picker {
   display: flex;
@@ -481,11 +999,12 @@ select:focus-visible {
 /* ---------- Party mode extras ---------- */
 
 :root[data-theme="party"] body {
-  position: relative;
-  isolation: isolate; /* keeps the rainbow layers behind the content */
-  min-height: 100vh;
-  overflow-x: hidden;
   background: transparent;
+}
+
+/* The rainbow replaces the photo slider */
+:root[data-theme="party"] .bg-slider {
+  display: none;
 }
 
 /* Layer 1: a big spinning, color-cycling rainbow swirl */
@@ -518,17 +1037,13 @@ select:focus-visible {
   animation: party-pulse 6s ease-in-out infinite alternate;
 }
 
-/* A dark glassy panel keeps the text readable over the rainbow */
-:root[data-theme="party"] main {
-  margin: 1.5rem auto;
-  background: rgba(15, 0, 35, 0.72);
-  border: 2px solid var(--border);
-  border-radius: 18px;
-  box-shadow: 0 0 24px #ff00e6, 0 0 48px #00f0ff;
-  backdrop-filter: blur(6px);
+/* Glowing neon borders on the glass panels */
+:root[data-theme="party"] .glass {
+  border-width: 2px;
 }
 
-:root[data-theme="party"] h1 {
+:root[data-theme="party"] h1,
+:root[data-theme="party"] .brand__name {
   background: linear-gradient(90deg, #ff0080, #ffef00, #00ff6a, #00e5ff, #ff00d4, #ff0080);
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -575,7 +1090,13 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme="party"] body::before,
   :root[data-theme="party"] body::after,
-  :root[data-theme="party"] h1 {
+  :root[data-theme="party"] h1,
+  :root[data-theme="party"] .brand__name {
     animation: none;
+  }
+
+  /* Photos still change, but with a plain crossfade instead of a zoom */
+  .bg-slide {
+    transform: none !important;
   }
 }
