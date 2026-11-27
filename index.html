@@ -9,7 +9,40 @@
 <body>
   <main>
     <h1>Habit Tracker</h1>
-    <div id="app"></div>
+
+    <form id="add-habit-form" class="add-habit" novalidate>
+      <div class="field">
+        <label for="habit-name">New habit</label>
+        <input
+          id="habit-name"
+          name="habit-name"
+          type="text"
+          placeholder="e.g. Drink 2L of water"
+          maxlength="60"
+          autocomplete="off"
+          required
+        >
+      </div>
+      <div class="field">
+        <label for="habit-description">Description <span class="optional">(optional)</span></label>
+        <input
+          id="habit-description"
+          name="habit-description"
+          type="text"
+          placeholder="e.g. Keep a bottle on my desk"
+          maxlength="140"
+          autocomplete="off"
+        >
+      </div>
+      <button type="submit">Add habit</button>
+      <p id="form-error" class="form-error" role="alert"></p>
+    </form>
+
+    <section aria-labelledby="habits-heading">
+      <h2 id="habits-heading">Your habits</h2>
+      <p id="empty-state" class="empty-state">No habits yet. Add your first one above.</p>
+      <ul id="habit-list" class="habit-list"></ul>
+    </section>
   </main>
   <script src="app.js"></script>
 </body>
