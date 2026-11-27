@@ -8,6 +8,8 @@ const DAYS_SHOWN = 7;
 
 const state = {
   habits: loadHabits(),
+  // The habit being edited, with the user's unsaved changes: { id, name, description, error }
+  edit: null,
 };
 
 // ---------- Theme (light / dark / party) ----------
@@ -94,10 +96,11 @@ function createId() {
 }
 
 // Returns an error message, or an empty string if the name is valid.
-function validateHabitName(name) {
+// ignoreId: the habit being edited, so it doesn't count as its own duplicate.
+function validateHabitName(name, ignoreId = null) {
   if (!name) return 'Please enter a habit name.';
   const exists = state.habits.some(
-    (habit) => habit.name.toLowerCase() === name.toLowerCase()
+    (habit) => habit.id !== ignoreId && habit.name.toLowerCase() === name.toLowerCase()
   );
   if (exists) return 'You already have a habit with that name.';
   return '';
@@ -127,8 +130,43 @@ function setDoneToday(id, done) {
 
 function removeHabit(id) {
   state.habits = state.habits.filter((h) => h.id !== id);
+  if (state.edit?.id === id) state.edit = null;
   saveHabits();
   render();
+}
+
+function startEdit(id) {
+  const habit = state.habits.find((h) => h.id === id);
+  if (!habit) return;
+  // Only one habit is edited at a time; opening another discards the first one's changes.
+  state.edit = { id, name: habit.name, description: habit.description, error: '' };
+  render();
+}
+
+function cancelEdit() {
+  state.edit = null;
+  render();
+}
+
+// Returns true if saved, false if the name was invalid (the error is shown in the form).
+function saveEdit() {
+  const habit = state.habits.find((h) => h.id === state.edit?.id);
+  if (!habit) return false;
+
+  const name = state.edit.name.trim();
+  const error = validateHabitName(name, habit.id);
+  if (error) {
+    state.edit.error = error;
+    render();
+    return false;
+  }
+
+  habit.name = name;
+  habit.description = state.edit.description.trim();
+  state.edit = null;
+  saveHabits();
+  render();
+  return true;
 }
 
 // ---------- Rendering ----------
@@ -164,20 +202,80 @@ function renderWeek(habit, todayKey) {
   return week;
 }
 
-function renderHabit(habit, todayKey) {
-  const item = el('li', 'habit');
-  item.dataset.id = habit.id;
+function actionButton(className, label, action, ariaLabel) {
+  const button = el('button', className, label);
+  button.type = 'button';
+  button.dataset.action = action;
+  button.setAttribute('aria-label', ariaLabel);
+  return button;
+}
 
+// Name, description, and the Edit / Remove buttons.
+function renderHabitHeader(habit) {
   const header = el('div', 'habit__header');
   const text = el('div');
   text.append(el('h3', 'habit__name', habit.name));
   if (habit.description) text.append(el('p', 'habit__description', habit.description));
 
-  const remove = el('button', 'habit__remove', 'Remove');
-  remove.type = 'button';
-  remove.dataset.action = 'remove';
-  remove.setAttribute('aria-label', `Remove habit "${habit.name}"`);
-  header.append(text, remove);
+  const actions = el('div', 'habit__actions');
+  actions.append(
+    actionButton('habit__action habit__action--edit', 'Edit', 'edit', `Edit habit "${habit.name}"`),
+    actionButton('habit__action habit__action--remove', 'Remove', 'remove', `Remove habit "${habit.name}"`)
+  );
+  header.append(text, actions);
+  return header;
+}
+
+function editField(habitId, field, labelText, value, maxLength, hint) {
+  const wrapper = el('div', 'field');
+  const id = `edit-${field}-${habitId}`;
+  const label = el('label', '', labelText);
+  label.htmlFor = id;
+  if (hint) label.append(' ', el('span', 'optional', hint));
+
+  const input = el('input');
+  input.id = id;
+  input.type = 'text';
+  input.value = value;
+  input.maxLength = maxLength;
+  input.autocomplete = 'off';
+  input.dataset.field = field;
+  wrapper.append(label, input);
+  return { wrapper, input };
+}
+
+// Inline form that replaces the header while a habit is being edited.
+function renderEditForm(habit) {
+  const form = el('form', 'habit__edit');
+  form.noValidate = true;
+  form.dataset.action = 'save-edit';
+  form.setAttribute('aria-label', `Edit habit "${habit.name}"`);
+
+  const name = editField(habit.id, 'name', 'Name', state.edit.name, 60);
+  const description = editField(habit.id, 'description', 'Description', state.edit.description, 140, '(optional)');
+  if (state.edit.error) name.input.setAttribute('aria-invalid', 'true');
+
+  const error = el('p', 'form-error', state.edit.error);
+  error.setAttribute('role', 'alert');
+
+  const buttons = el('div', 'habit__edit-buttons');
+  const save = el('button', 'button-primary', 'Save');
+  save.type = 'submit';
+  const cancel = el('button', 'button-secondary', 'Cancel');
+  cancel.type = 'button';
+  cancel.dataset.action = 'cancel-edit';
+  buttons.append(save, cancel);
+
+  form.append(name.wrapper, description.wrapper, error, buttons);
+  return form;
+}
+
+function renderHabit(habit, todayKey) {
+  const item = el('li', 'habit');
+  item.dataset.id = habit.id;
+
+  const isEditing = state.edit?.id === habit.id;
+  const header = isEditing ? renderEditForm(habit) : renderHabitHeader(habit);
 
   const todayLabel = el('label', 'habit__today');
   const checkbox = el('input');
@@ -277,13 +375,64 @@ document.addEventListener('DOMContentLoaded', () => {
     list.querySelector(`[data-id="${id}"] [data-action="toggle-today"]`)?.focus();
   });
 
+  // After a re-render the old elements are gone, so move focus to the new one.
+  function focusInHabit(id, selector) {
+    list.querySelector(`[data-id="${id}"] ${selector}`)?.focus();
+  }
+
   list.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-action="remove"]');
+    const button = event.target.closest('button[data-action]');
     if (!button) return;
-    const habit = state.habits.find((h) => h.id === button.closest('.habit').dataset.id);
-    if (habit && confirm(`Remove "${habit.name}"? This deletes its history too.`)) {
-      removeHabit(habit.id);
+    const id = button.closest('.habit').dataset.id;
+    const habit = state.habits.find((h) => h.id === id);
+    if (!habit) return;
+
+    switch (button.dataset.action) {
+      case 'edit':
+        startEdit(id);
+        focusInHabit(id, '[data-field="name"]');
+        break;
+      case 'cancel-edit':
+        cancelEdit();
+        focusInHabit(id, '[data-action="edit"]');
+        break;
+      case 'remove':
+        if (confirm(`Remove "${habit.name}"? This deletes its history too.`)) {
+          removeHabit(id);
+        }
+        break;
     }
+  });
+
+  list.addEventListener('submit', (event) => {
+    if (event.target.dataset.action !== 'save-edit') return;
+    event.preventDefault();
+    const id = event.target.closest('.habit').dataset.id;
+    if (saveEdit()) {
+      focusInHabit(id, '[data-action="edit"]');
+    } else {
+      focusInHabit(id, '[data-field="name"]');
+    }
+  });
+
+  // Keep the unsaved changes in state, so ticking another habit (which re-renders) doesn't lose them.
+  list.addEventListener('input', (event) => {
+    const field = event.target.dataset.field;
+    if (!field || !state.edit) return;
+    state.edit[field] = event.target.value;
+    if (field === 'name' && state.edit.error) {
+      state.edit.error = '';
+      event.target.removeAttribute('aria-invalid');
+      event.target.closest('form').querySelector('.form-error').textContent = '';
+    }
+  });
+
+  // Escape cancels editing.
+  list.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !event.target.closest('.habit__edit')) return;
+    const id = event.target.closest('.habit').dataset.id;
+    cancelEdit();
+    focusInHabit(id, '[data-action="edit"]');
   });
 
   render();
