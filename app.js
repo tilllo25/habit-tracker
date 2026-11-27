@@ -1,11 +1,40 @@
 // Habit Tracker app logic
 
 const STORAGE_KEY = 'habitTracker.habits';
+const THEME_KEY = 'habitTracker.theme';
+const THEMES = ['light', 'dark', 'party'];
+const DEFAULT_THEME = 'light';
 const DAYS_SHOWN = 7;
 
 const state = {
   habits: loadHabits(),
 };
+
+// ---------- Theme (light / dark / party) ----------
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return THEMES.includes(saved) ? saved : DEFAULT_THEME;
+  } catch {
+    return DEFAULT_THEME;
+  }
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // Storage unavailable: the mode still applies for this session.
+  }
+}
+
+// Apply the saved mode right away, before the page finishes loading.
+applyTheme(loadTheme());
 
 // ---------- Storage ----------
 
@@ -178,6 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const descriptionInput = document.getElementById('habit-description');
   const error = document.getElementById('form-error');
   const list = document.getElementById('habit-list');
+  const themeSelect = document.getElementById('theme-select');
+
+  themeSelect.value = loadTheme();
+  themeSelect.addEventListener('change', () => {
+    const theme = THEMES.includes(themeSelect.value) ? themeSelect.value : DEFAULT_THEME;
+    applyTheme(theme);
+    saveTheme(theme);
+  });
 
   function showError(message) {
     error.textContent = message;
