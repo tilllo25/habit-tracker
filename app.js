@@ -41,6 +41,45 @@ function saveTheme(theme) {
 // Apply the saved mode right away, before the page finishes loading.
 applyTheme(loadTheme());
 
+// ---------- Intro panel (collapsible) ----------
+
+const INTRO_KEY = 'habitTracker.introCollapsed';
+
+function loadIntroCollapsed() {
+  try {
+    return localStorage.getItem(INTRO_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveIntroCollapsed(collapsed) {
+  try {
+    localStorage.setItem(INTRO_KEY, collapsed ? '1' : '0');
+  } catch {
+    // Storage unavailable: the choice applies for this session only.
+  }
+}
+
+// The class drives the animation in CSS. `inert` keeps the hidden panel out of
+// keyboard focus and screen readers.
+function applyIntroCollapsed(collapsed) {
+  document.body.classList.toggle('intro-collapsed', collapsed);
+  const intro = document.getElementById('intro');
+  if (intro) intro.inert = collapsed;
+  for (const button of document.querySelectorAll('[data-intro-toggle]')) {
+    button.setAttribute('aria-expanded', String(!collapsed));
+  }
+}
+
+// Apply the saved state on load without animating: `is-loading` switches transitions off
+// until the page has been drawn once. (This script sits at the end of <body>, so the elements exist.)
+document.body.classList.add('is-loading');
+applyIntroCollapsed(loadIntroCollapsed());
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => document.body.classList.remove('is-loading'));
+});
+
 // ---------- Storage ----------
 
 function loadHabits() {
@@ -331,6 +370,13 @@ function render() {
   const emptyState = document.getElementById('empty-state');
   const todayKey = toDateKey(new Date());
 
+  // e.g. "Friday, 27 November" in the browser's language (same as the 7-day grid)
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
   renderAddForm();
 
   list.replaceChildren(...state.habits.map((habit) => renderHabit(habit, todayKey)));
@@ -353,6 +399,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const theme = THEMES.includes(themeSelect.value) ? themeSelect.value : DEFAULT_THEME;
     applyTheme(theme);
     saveTheme(theme);
+  });
+
+  // Intro: the header button toggles it; the × inside the panel hides it.
+  const introToggle = document.getElementById('intro-toggle');
+  for (const button of document.querySelectorAll('[data-intro-toggle]')) {
+    button.addEventListener('click', () => {
+      const collapse = !document.body.classList.contains('intro-collapsed');
+      applyIntroCollapsed(collapse);
+      saveIntroCollapsed(collapse);
+
+      if (collapse) {
+        // The panel is gone, so move focus to the button that brings it back,
+        // and make that button glow briefly so people see where it went.
+        introToggle.focus();
+        introToggle.classList.remove('header-button--pulse');
+        void introToggle.offsetWidth; // restart the animation if clicked twice
+        introToggle.classList.add('header-button--pulse');
+      }
+    });
+  }
+  introToggle.addEventListener('animationend', () => {
+    introToggle.classList.remove('header-button--pulse');
   });
 
   function showError(message) {
